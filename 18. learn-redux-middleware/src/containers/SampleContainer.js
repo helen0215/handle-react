@@ -14,8 +14,17 @@ const SampleContainer = ({
 }) => {
   // 클래스 형태였다면 componentDidMount
   useEffect(() => {
-    getPost(1);
-    getUsers(1);
+    // 실패 액션을 컴포넌트에서 조회해보기
+    // useEffect에 파라미터로 넣는 함수는 async로 할 수 없기 때문에 내부에서 async 함수 선언 후 호출
+    const fn = async () => {
+      try {
+        await getPost(1);
+        await getUsers(1);
+      } catch (e) {
+        console.log(e); // 에러조회
+      }
+    }
+    fn();
   }, [getPost, getUsers]);
 
   return (
@@ -29,11 +38,11 @@ const SampleContainer = ({
 };
 
 export default connect(
-  ({ sample }) => ({
+  ({ sample, loading }) => ({
     post: sample.post,
     users: sample.users,
-    loadingPost: sample.loading.GET_POST,
-    loadingUsers: sample.loading.GET_USERS
+    loadingPost: loading['sample/GET_POST'],
+    loadingUsers: loading['sample/GET_USERS']
   }),
   {
     getPost,
