@@ -1,28 +1,16 @@
 import React, { useState, Suspense } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import loadable from '@loadable/component';
 
-/** React.lazy, Suspense를 사용한 코드 스플리팅 **/
-// React.lazy는 컴포넌트를 렌더링 하는 시점에서 비동기 적으로 로딩할 수 있게 해주는 유틸함수
-/*
- * 예)
-  const SplitMe = React.lazy(() => import('./SplitMe'));
-*/
+/** Loadable Components를 이용한 코드 스플리팅 **/
+// Loadable Components 는 코드 스플리팅을 도와주는 서드파티 라이브러리 
+// SSR 지원 (React.lazy, Suspense는 SSR 미지원)
+// 스플리팅된 파일을 미리 불러올 수 있는 기능도 제공 
 
-// Suspense는 리액트 내장 컴포넌트 로서 코드 스플리팅된 컴포넌트를 로딩하도록 발동 시킬 수 있음
-// 로딩이 끝나지 않았을때 보여줄 UI를 설정 할 수 있음
-// fallback props를 통해 로딩중에 보여줄 JSX를 지정할 수 있음
-/*
- * 예)
-  import { Suspense } from 'react';
-
-  (...)
-  <Suspense fallback={<div>loading...</div>}>
-    <SplitMe />
-  </Suspense>
-*/
-
-const SplitMe = React.lazy(() => import('./SplitMe'));
+const SplitMe = loadable(() => import('./SplitMe'), {
+  fallback: <div>loading...</div>
+});
 
 function App() {
   const [visible, setVisible] = useState(false);
@@ -36,9 +24,7 @@ function App() {
         <p onClick={onClick}>
           Hello React
         </p>
-        <Suspense fallback={<div>loading...</div>}>
-          {visible && <SplitMe />}
-        </Suspense>
+        {visible && <SplitMe />}
       </header>
     </div>
   );
