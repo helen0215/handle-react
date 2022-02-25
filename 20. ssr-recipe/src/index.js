@@ -9,7 +9,11 @@ import rootReducer from './modules';
 import thunk from 'redux-thunk';
 import { Provider } from 'react-redux';
 
-const store = createStore(rootReducer, applyMiddleware(thunk));
+const store = createStore(
+  rootReducer, 
+  window.__PRELOADED_STATE__, // 이 값을 초기상태로 사용함
+  applyMiddleware(thunk)
+);
 
 ReactDOM.render(
   <React.StrictMode>
