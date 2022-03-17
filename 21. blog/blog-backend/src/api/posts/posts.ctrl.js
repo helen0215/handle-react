@@ -63,12 +63,20 @@ export const list = async ctx => {
       .sort({_id: -1}) // 1은 오름차순, -1은 내림차순
       .limit(10) // select 되는 개수 제한하기
       .skip((page - 1) * 10)
+      // .lean() // lean 함수를 사용하면 데이터를 처음부터 json 형태로 조회할 수 있음
       .exec();
 
     // 헤더에 Last-Page 추가하기
     const postCount = await Post.countDocuments().exec();
     ctx.set('Last-Page', Math.ceil(postCount / 10));
-    ctx.body = posts;
+
+    ctx.body = posts
+      .map(post => post.toJSON())
+      .map(post => ({
+        ...post,
+        body:
+          post.body.length < 200 ? post.body : `${post.body.slice(0, 200)}...`,
+      }))
   } catch (e) {
     ctx.throw(500, e);
   }
