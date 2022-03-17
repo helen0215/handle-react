@@ -51,8 +51,23 @@ export const write = async ctx => {
 }
 
 export const list = async ctx => {
+  // query는 문자열이기 때문에 숫자로 변환해야함
+  const page = parseInt(ctx.query.page || '1', 10);
+  if (page < 1) {
+    ctx.status = 400;
+    return;
+  }
+
   try {
-    const posts = await Post.find().exec();
+    const posts = await Post.find()
+      .sort({_id: -1}) // 1은 오름차순, -1은 내림차순
+      .limit(10) // select 되는 개수 제한하기
+      .skip((page - 1) * 10)
+      .exec();
+
+    // 헤더에 Last-Page 추가하기
+    const postCount = await Post.countDocuments().exec();
+    ctx.set('Last-Page', Math.ceil(postCount / 10));
     ctx.body = posts;
   } catch (e) {
     ctx.throw(500, e);
@@ -110,7 +125,7 @@ export const update = async ctx => {
     ctx.body = result.error;
     return;
   }
-  
+
   try {
     const post = await Post.findByIdAndUpdate(id, ctx.request.body, {
       new: true, // 이 값을 설정하면 업데이트 된 데이터를 반환함, false 일경우 업데이트 되기 전의 데이터를 반환
