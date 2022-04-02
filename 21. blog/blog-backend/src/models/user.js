@@ -18,11 +18,17 @@ UserSchema.methods.checkPassword = async function(password) {
   return result;
 };
 
+UserSchema.methods.serialize = function() {
+  // 응답할 데이터에서 hashedPassword 필드 제거
+  const data = this.toJSON();
+  delete data.hashedPassword;
+  return data;
+};
+
 // 모델 스태틱 메서드
 UserSchema.statics.findByUsername = function(username) {
   return this.findOne({ username });
 };
-
 
 const User = mongoose.model('User', UserSchema);
 export default User;
