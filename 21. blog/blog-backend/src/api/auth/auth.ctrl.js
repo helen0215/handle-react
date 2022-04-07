@@ -41,6 +41,12 @@ export const register = async ctx => {
     await user.setPassword(password);
     await user.save();
     ctx.body = user.serialize();
+
+    const token = user.generateToken();
+    ctx.cookies.set('access_token', token, {
+      maxAGe: 1000 * 60 * 60 * 24 * 7, // 7일
+      httpOnly: true,
+    });
   } catch(e) {
     ctx.throw(500, e);
   }
@@ -76,6 +82,12 @@ export const login = async ctx => {
       return;
     }
     ctx.body = user.serialize();
+
+    const token = user.generateToken();
+    ctx.cookies.set('access_token', token, {
+      maxAGe: 1000 * 60 * 60 * 24 * 7, // 7일
+      httpOnly: true,
+    });
   } catch (e) {
     ctx.throw(500, e);
   }
