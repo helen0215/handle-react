@@ -4,14 +4,33 @@ import Joi from 'joi';
 
 const {ObjectId} = mongoose.Types;
 
-export const checkObjectId = (ctx, next) => {
+export const getPostById = async (ctx, next) => {
   const {id} = ctx.params;
   if (!ObjectId.isValid(id)) {
     ctx.status = 404;
     return;
   }
+  try {
+    const post = await Post.findById(id);
+    if (!post) {
+      ctx.status = 404;
+      return;
+    }
+    ctx.state.post = post;
+    return next();
+  } catch (e) {
+    ctx.throw(500, e);
+  }
+};
+
+export const checkOwnPost = (ctx, next) => {
+  const {user, post} = ctx.state;
+  if (post.user._id.toString() !== user._id) {
+    ctx.status = 403;
+    return;
+  }
   return next();
-}
+};
 
 /* 포스트 작성
 POST /api/posts
@@ -39,7 +58,8 @@ export const write = async ctx => {
   const post = new Post({
     title,
     body,
-    tags
+    tags,
+    user: ctx.state.user,
   });
 
   try {
@@ -48,8 +68,11 @@ export const write = async ctx => {
   } catch (e) {
     ctx.throw(500, e);
   }
-}
+};
 
+/*
+  GET /api/posts?username=&tag=&page=
+*/
 export const list = async ctx => {
   // query는 문자열이기 때문에 숫자로 변환해야함
   const page = parseInt(ctx.query.page || '1', 10);
@@ -57,9 +80,16 @@ export const list = async ctx => {
     ctx.status = 400;
     return;
   }
+  
+  const {tag, username} = ctx.query;
+  // tag, username 이 유효하면 객체안에 넣고 그렇지 않으면 넣지 않음
+  const query = {
+    ...(username ? {'user.username': username} : {}),
+    ...(tag ? {tags: tag} : {}),
+  };
 
   try {
-    const posts = await Post.find()
+    const posts = await Post.find(query)
       .sort({_id: -1}) // 1은 오름차순, -1은 내림차순
       .limit(10) // select 되는 개수 제한하기
       .skip((page - 1) * 10)
@@ -67,7 +97,7 @@ export const list = async ctx => {
       .exec();
 
     // 헤더에 Last-Page 추가하기
-    const postCount = await Post.countDocuments().exec();
+    const postCount = await Post.countDocuments(query).exec();
     ctx.set('Last-Page', Math.ceil(postCount / 10));
 
     ctx.body = posts
@@ -85,19 +115,8 @@ export const list = async ctx => {
 /* 특정 포스트 조회
 GET /api/posts/:id
 */
-export const read = async ctx => {
-  const {id} = ctx.params;
-  try {
-    const post = await Post.findById(id).exec();
-    if (!post) {
-      ctx.status = 404;
-      return;
-    }
-    ctx.body = post;
-  } catch (e) {
-    ctx.throw(500, e);
-  }
- 
+export const read = ctx => {
+  ctx.body = ctx.state.post;
 };
 
 /* 특정 포스트 제거
