@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import palette from '../../lib/styles/palette';
 import Button from '../common/Button';
+import { AUTH_TYPE } from '../../lib/constants';
 
 /**
  * 회원가입 또는 로그인 폼을 보여준다.
@@ -50,10 +51,17 @@ const ButtonWithMarginTop = styled(Button)`
   margin-top: 1rem;
 `;
 
-const AuthForm = () => {
+const TEXT_MAP = {
+  [AUTH_TYPE.LOGIN]: '로그인',
+  [AUTH_TYPE.REGISTER]:'회원가입'
+};
+
+const AuthForm = ({type}) => {
+  const text = TEXT_MAP[type];
+
   return (
     <AuthFormBlock>
-      <h3>로그인</h3>
+      <h3>{text}</h3>
       <form>
         <StyledInput autoComplete="username" name="username" placeholder="아이디" />
         <StyledInput
@@ -62,12 +70,24 @@ const AuthForm = () => {
           placeholder="비밀번호"
           type="password"
         />
+        {type === AUTH_TYPE.REGISTER && (
+          <StyledInput
+            autoComplete="new-password"
+            name="passcordConfirm"
+            placeholder="비밀번호 확인"
+            type="password"
+          />
+        )}
         <ButtonWithMarginTop cyan fullWidth>
-          로그인
+          {text}
         </ButtonWithMarginTop>
       </form>
       <Footer>
-        <Link to="/register">로그인</Link>
+        { type === AUTH_TYPE.LOGIN ? (
+          <Link to={`/${AUTH_TYPE.REGISTER}`}>{TEXT_MAP[AUTH_TYPE.REGISTER]}</Link>
+        ) : (
+          <Link to={`/${AUTH_TYPE.LOGIN}`}>{TEXT_MAP[AUTH_TYPE.LOGIN]}</Link>  
+        )}
       </Footer>
     </AuthFormBlock>
   );
